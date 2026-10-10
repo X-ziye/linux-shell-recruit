@@ -1,4 +1,4 @@
-# Task01 知识点总结
+# Task01 
 
 ## 1. 基础目录命令
 - `pwd`：print working directory，**打印当前所在的绝对路径**
@@ -87,7 +87,7 @@ chmod +x check.sh
 2. sh脚本必须LF换行，Windows粘贴容易引入CRLF
 3. 字符串比对：大小写、空格会影响匹配
 
-# Task02 知识点总结
+# Task02 
 ## 1. 两种执行命令的方式
 1. `./tools/recruit-info`
 - 提供**相对路径**，shell直接按路径定位文件执行。
@@ -130,3 +130,48 @@ chmod +x check.sh
 ## 6. 语法小考点
 - `$VAR`：读取变量的值；`${VAR}` 显式界定变量边界，变量后紧跟字母数字时必须使用。
 - `$(command)`：命令替换，执行command并捕获输出。
+
+
+# Task03 
+命令：
+```bash
+find workspace/project -type f -exec grep -lE 'TODO|FIXME' {} \; | sort | uniq > output/03_code_search.txt
+```
+
+## 1. `find workspace/project -type f`
+- `workspace/project`：起始目录，从此目录**递归向下搜索**
+- `-type f`：只筛选**普通文件**，过滤文件夹、软链接
+
+## 2. `-exec grep -lE 'TODO|FIXME' {} \;`
+- `-exec`：find的参数，对找到的每一个文件，执行后面grep命令
+- `{}`：占位符，代表find遍历到的当前文件路径
+- `grep -l`（小写L）：文件内匹配关键词 → 打印该文件路径，**不输出文件内文本**
+- `-E`：启用扩展正则，`|` 代表逻辑“或”
+- `'TODO|FIXME'`：匹配 TODO 或者 FIXME
+- `\;`：`-exec` 结束标记，固定写法不可省略
+> 本段效果：输出所有包含TODO/FIXME的文件路径；同一个文件多处匹配时会产生重复路径。
+
+## 3. `| sort`
+`|` 管道符：将前一段的输出作为sort的输入。
+`sort`：对路径行按**字典序排序**。
+> 原因：`uniq` 只能删除**连续重复行**，必须先排序，重复行才能挨在一起。
+
+## 4. `| uniq`
+读取排序后的文本，删除连续重复的路径，保证每个文件路径只出现一次。
+
+## 5. `> output/03_code_search.txt`
+`>` 标准输出重定向：将管道最终结果**覆盖写入**指定文件，终端不再打印输出。
+
+## 完整执行流程
+1. find递归找出全部普通文件
+2. 逐个grep判断文件是否含TODO/FIXME，输出匹配文件路径（存在重复）
+3. sort对路径字典排序
+4. uniq去除重复路径
+5. 最终结果写入txt文件
+
+## 易错点汇总
+1. `-l`小写L；大写`-L`含义相反，输出**不匹配**的文件，极易踩坑
+2. 顺序：`sort` 必须写在 `uniq` 前面，颠倒则去重失效
+3. `-exec` 末尾 `\;` 不能丢
+4. `>` 覆盖写入；`>>` 是追加，本题不能使用
+
