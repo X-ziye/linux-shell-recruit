@@ -175,3 +175,58 @@ find workspace/project -type f -exec grep -lE 'TODO|FIXME' {} \; | sort | uniq >
 3. `-exec` 末尾 `\;` 不能丢
 4. `>` 覆盖写入；`>>` 是追加，本题不能使用
 
+# Task04 知识点总结
+## 用到命令
+### grep
+- `grep 'ERROR' logs/server.log`：筛选包含ERROR的全部日志行
+- `-o`：只输出匹配到的文本片段，不输出整行
+  例：`grep -o 'user=[^ ]*' logs/server.log`
+
+### wc
+- `wc -l`：统计文本行数，用来统计ERROR总条数
+
+### cut
+语法：`cut -d分隔符 -f列号`
+- `-d`：设置单个字符作为分隔符
+- `-f`：选取字段，**编号从1开始**
+例：`cut -d= -f2`，`user=alice`提取出`alice`
+
+### sort
+- `sort`：字典序排序
+- `sort -nr`：数字降序（数字从大到小排列）
+
+### uniq
+> ⚠️ 前面必须先用sort排序，只消除连续重复
+- `uniq`：删除连续重复行
+- `uniq -c`：统计每行出现次数，输出格式：`次数 内容`
+
+### head
+- `head -n1`：只取文本第一行
+
+### awk
+- `awk '{print $2}'`：打印一行的第2个字段
+
+### 管道 |
+将前一条命令输出，作为后一条命令输入
+
+### 输出重定向 >
+`命令 > 文件`：把输出写入文件，覆盖原有内容
+
+## 三条完整命令
+```bash
+# 任务1：ERROR总行数
+grep 'ERROR' logs/server.log | wc -l > output/04_error_count.txt
+
+# 任务2：错误对应的用户名，去重、字典排序
+grep 'ERROR' logs/server.log | grep -o 'user=[^ ]*' | cut -d= -f2 | sort | uniq > output/04_error_users.txt
+
+# 任务3：出现次数最多的错误码
+grep 'ERROR' logs/server.log | grep -o 'code=[0-9]*' | cut -d= -f2 | sort | uniq -c | sort -nr | head -n1 | awk '{print $2}' > output/04_top_code.txt
+```
+
+## 易错点
+1. `uniq / uniq -c` 前面必须写`sort`，否则计数、去重错误
+2. `sort`默认字典序，对比数字大小要用`-nr`
+3. cut的分隔符只能是单个字符
+4. 本题目标是单个已知文件`logs/server.log`，**不需要find**
+
